@@ -2,8 +2,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum TrackState
+{
+    Normal,
+    InMud
+}
+
 public class PlayerController : MonoBehaviour
 {
+    [SerializeField]
+    private TrackState trackState;
+    private bool goingForward;
+    [SerializeField]
+    private Transform frontCheck;
+    [SerializeField]
+    private Transform backCheck;
+
     [SerializeField]
     private KeyCode forwardKey;
     [SerializeField]
@@ -23,15 +37,19 @@ public class PlayerController : MonoBehaviour
     private float currentSpeed;
 
     [SerializeField]
-    private float speedStep = 1.0f;
-
-    [SerializeField]
     private float maxVelocity = 20.0f;
 
+    [SerializeField]
+    private float mudSpeedFactor = 0.7f;
+
+    [SerializeField]
+    private LayerMask collideWith;
+    private bool canCheck;
     private Rigidbody2D body;
 
 	void Start ()
     {
+        canCheck = true;
         body = GetComponent<Rigidbody2D>();
 	}
 
@@ -48,17 +66,74 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetKeyDown(forwardKey))
         {
-            currentSpeed += speedStep;
+            currentSpeed = maxVelocity;
         }
         else if (Input.GetKeyDown(backwardKey))
         {
-            currentSpeed -= speedStep;
+            currentSpeed = -maxVelocity;
         }
     }
 
     void FixedUpdate ()
     {
-        body.velocity = transform.up * currentSpeed;
+        if (canCheck)
+        {
+            if (currentSpeed < 0)
+            {
+                if (Physics2D.OverlapCircle(backCheck.position, 0.2f, collideWith))
+                {
+                    currentSpeed = maxVelocity;
+                    StartCoroutine(DirectionChangeCooldown());
+                }
+            }
+            else if (currentSpeed > 0)
+            {
+                if (Physics2D.OverlapCircle(frontCheck.position, 0.2f, collideWith))
+                {
+                    currentSpeed = -maxVelocity;
+                    StartCoroutine(DirectionChangeCooldown());
+                }
+            }
+        }
+
+        float speed = currentSpeed;
+        if (trackState == TrackState.InMud)
+        {
+            speed *= mudSpeedFactor;
+        }
+
+        if (trackState == TrackState.InMud)
+        {
+            speed *= mudSpeedFactor;
+        }
+
+        body.velocity = transform.up * speed;
         body.velocity = new Vector2(Mathf.Min(maxVelocity, body.velocity.x), Mathf.Min(maxVelocity, body.velocity.y));
+    }
+
+    IEnumerator DirectionChangeCooldown()
+    {
+        canCheck = false;
+        yield return new WaitForSeconds(0.3f);
+        canCheck = true;
+    }
+
+    void OnTriggerEnter2D(Collider2D collider)
+    {
+        if (collider.tag == "mud")
+        {
+            trackState = TrackState.InMud;
+        }
+    }
+
+    void OnTriggerExit2D(Collider2D collider)
+    {
+        if (collider.tag == "mud")
+        {
+            if (trackState == TrackState.InMud)
+            {
+                trackState = TrackState.Normal;
+            }
+        }
     }
 }
