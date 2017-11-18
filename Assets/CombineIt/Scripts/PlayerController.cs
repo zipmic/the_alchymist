@@ -17,13 +17,16 @@ public class PlayerController : MonoBehaviour
     private float speed = 10.0f;
 
     [SerializeField]
+    private float rotationSpeed = 20.0f;
+
+    [SerializeField]
     private float currentSpeed;
 
     [SerializeField]
-    private float speedStep = 5.0f;
+    private float speedStep = 1.0f;
 
     [SerializeField]
-    private float maxVelocity = 30.0f;
+    private float maxVelocity = 20.0f;
 
     private Rigidbody2D body;
 
@@ -36,7 +39,11 @@ public class PlayerController : MonoBehaviour
     {
         if (Input.GetKey(rotateLeftKey))
         {
-            transform.Rotate(0, 0, speed * Time.deltaTime);
+            transform.Rotate(0, 0, rotationSpeed * Time.deltaTime);
+        }
+        else if (Input.GetKey(rotateRightKey))
+        {
+            transform.Rotate(0, 0, -rotationSpeed * Time.deltaTime);
         }
 
         if (Input.GetKeyDown(forwardKey))
