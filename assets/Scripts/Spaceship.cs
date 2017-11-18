@@ -77,7 +77,7 @@ public class Spaceship : MonoBehaviour
             // _rb.AddForceAtPosition(transform.up*BackThrusterSpeed*Time.deltaTime, BackThruster.transform.position);
 
         }
-        else if (Input.GetKeyUp(KeyCode.W) || !CurrentThruster == Thruster.Forward)
+        else if (Input.GetKeyUp(KeyCode.W) || !(CurrentThruster == Thruster.Forward))
         {
             BackThrusterParticle1.Stop();
             BackThrusterParticle2.Stop();
@@ -88,7 +88,7 @@ public class Spaceship : MonoBehaviour
             LeftThrusterParticle.Play();
             _rb.AddForceAtPosition(transform.right * -1 * LeftRightThrusterSpeed * Time.deltaTime, LeftThruster.transform.position);
         }
-        else if (Input.GetKeyUp(KeyCode.A) || !CurrentThruster == Thruster.Left)
+        else if (Input.GetKeyUp(KeyCode.A) || !(CurrentThruster == Thruster.Left))
         {
             LeftThrusterParticle.Stop();
         }
@@ -98,7 +98,7 @@ public class Spaceship : MonoBehaviour
             RightThrusterParticle.Play();
             _rb.AddForceAtPosition(transform.right * LeftRightThrusterSpeed * Time.deltaTime, RightThruster.transform.position);
         }
-        else if (Input.GetKeyUp(KeyCode.D) || !CurrentThruster == Thruster.Right)
+        else if (Input.GetKeyUp(KeyCode.D) || !(CurrentThruster == Thruster.Right))
         {
             RightThrusterParticle.Stop();
         }
