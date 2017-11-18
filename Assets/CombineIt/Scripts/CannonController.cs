@@ -28,5 +28,13 @@ public class CannonController : MonoBehaviour
     public void Shoot()
     {
         var projectile = projectilePool[currentProjectile++];
+        projectile.transform.position = cannonPosition.position;
+        projectile.SetActive(true);
+        projectile.GetComponent<Projectile>().ShootInDirection(transform.up);
+
+        if (currentProjectile == poolSize)
+        {
+            currentProjectile = 0;
+        }
     }
 }

@@ -10,6 +10,7 @@ public enum TrackState
 
 public class PlayerController : MonoBehaviour
 {
+
     [SerializeField]
     private TrackState trackState;
     private bool goingForward;
@@ -26,6 +27,8 @@ public class PlayerController : MonoBehaviour
     private KeyCode rotateLeftKey;
     [SerializeField]
     private KeyCode rotateRightKey;
+    [SerializeField]
+    private KeyCode shootKey;
 
     [SerializeField]
     private float speed = 10.0f;
@@ -45,11 +48,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private LayerMask collideWith;
     private bool canCheck;
+    private CannonController cannonController;
     private Rigidbody2D body;
 
-	void Start ()
+    void Start ()
     {
         canCheck = true;
+        cannonController = GetComponent<CannonController>();
         body = GetComponent<Rigidbody2D>();
 	}
 
@@ -71,6 +76,11 @@ public class PlayerController : MonoBehaviour
         else if (Input.GetKeyDown(backwardKey))
         {
             currentSpeed = -maxVelocity;
+        }
+
+        if (Input.GetKeyDown(shootKey))
+        {
+            cannonController.Shoot();
         }
     }
 

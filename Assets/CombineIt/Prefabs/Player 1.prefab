@@ -164,6 +164,7 @@ MonoBehaviour:
   backwardKey: 115
   rotateLeftKey: 97
   rotateRightKey: 100
+  shootKey: 113
   speed: 10
   rotationSpeed: 20
   currentSpeed: 0
