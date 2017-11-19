@@ -11,4 +11,14 @@ public class Projectile : MonoBehaviour
     {
         GetComponent<Rigidbody2D>().velocity = direction * projectileSpeed;
     }
+
+    void OnTriggerEnter2D(Collider2D collider)
+    {
+        if (collider.tag.Contains("Player") && !collider.tag.Equals(gameObject.tag))
+        {
+            Camera.main.GetComponent<ScreenShake>().ShakeIt();
+            collider.GetComponent<PlayerController>().Damage(20);
+            gameObject.SetActive(false);
+        }
+    }
 }

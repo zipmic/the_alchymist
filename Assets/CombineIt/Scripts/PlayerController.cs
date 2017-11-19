@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum TrackState
 {
@@ -10,7 +11,8 @@ public enum TrackState
 
 public class PlayerController : MonoBehaviour
 {
-
+    [SerializeField]
+    private GameController gameController;
     [SerializeField]
     private TrackState trackState;
     private bool goingForward;
@@ -46,79 +48,144 @@ public class PlayerController : MonoBehaviour
     private float mudSpeedFactor = 0.7f;
 
     [SerializeField]
+    private int health = 100;
+
+    [SerializeField]
+    private Text healthText;
+
+    [SerializeField]
+    private AudioSource drivingSound;
+
+    [SerializeField]
     private LayerMask collideWith;
     private bool canCheck;
     private CannonController cannonController;
     private Rigidbody2D body;
+
+    private bool moveExecuted;
+    private Queue<ActionType> actionsToExecute;
+    private ActionType currentAction = ActionType.None;
 
     void Start ()
     {
         canCheck = true;
         cannonController = GetComponent<CannonController>();
         body = GetComponent<Rigidbody2D>();
+        currentSpeed = 0;
 	}
 
-    void Update()
+    public void ExecuteActions(Queue<ActionType> actions)
     {
-        if (Input.GetKey(rotateLeftKey))
+        actionsToExecute = actions;
+        StartCoroutine(ExecuteAction());
+    }
+
+    IEnumerator ExecuteAction()
+    {
+        currentAction = actionsToExecute.Dequeue();
+        float timeUntilNextAction = 2.0f;
+
+        if (drivingSound.isPlaying && currentAction != ActionType.Forward || currentAction != ActionType.Backwards)
         {
-            transform.Rotate(0, 0, rotationSpeed * Time.deltaTime);
-        }
-        else if (Input.GetKey(rotateRightKey))
-        {
-            transform.Rotate(0, 0, -rotationSpeed * Time.deltaTime);
+            drivingSound.Stop();
         }
 
-        if (Input.GetKeyDown(forwardKey))
+        switch (currentAction)
         {
-            currentSpeed = maxVelocity;
-        }
-        else if (Input.GetKeyDown(backwardKey))
-        {
-            currentSpeed = -maxVelocity;
+            case ActionType.RotateLeft45:
+            case ActionType.RotateRight45:
+                timeUntilNextAction = 0.5f;
+                break;
+            case ActionType.RotateLeft90:
+            case ActionType.RotateRight90:
+                timeUntilNextAction = 1.5f;
+                break;
+            case ActionType.Forward:
+            case ActionType.Backwards:
+                drivingSound.Play();
+                break;
         }
 
-        if (Input.GetKeyDown(shootKey))
+        yield return new WaitForSeconds(timeUntilNextAction);
+
+        if (actionsToExecute.Count > 0)
         {
-            cannonController.Shoot();
+            StartCoroutine(ExecuteAction());
+        }
+        else
+        {
+            currentAction = ActionType.None;
+            gameController.PlayerDone(transform.tag);
         }
     }
 
-    void FixedUpdate ()
+    void Update()
     {
-        if (canCheck)
+        switch (currentAction)
         {
-            if (currentSpeed < 0)
+            case ActionType.Forward:
+
+                currentSpeed = maxVelocity;
+                moveExecuted = false;
+                break;
+            case ActionType.Backwards:
+                currentSpeed = -maxVelocity;
+                moveExecuted = false;
+                break;
+            case ActionType.RotateLeft90:
+            case ActionType.RotateLeft45:
+                transform.Rotate(0, 0, -rotationSpeed * Time.deltaTime);
+                break;
+            case ActionType.RotateRight90:
+            case ActionType.RotateRight45:
+                transform.Rotate(0, 0, rotationSpeed * Time.deltaTime);
+                break;
+            case ActionType.Stop:
+                currentSpeed = 0.0f;
+                break;
+            case ActionType.Shoot:
+                cannonController.InitiateShot();
+                currentAction = ActionType.None;
+                break;
+        }
+    }
+
+    void FixedUpdate()
+    {
+        if (!moveExecuted)
+        {
+            if (currentSpeed < 0 && Physics2D.OverlapCircle(backCheck.position, 0.2f, collideWith) || currentSpeed > 0 && Physics2D.OverlapCircle(frontCheck.position, 0.2f, collideWith))
             {
-                if (Physics2D.OverlapCircle(backCheck.position, 0.2f, collideWith))
-                {
-                    currentSpeed = maxVelocity;
-                    StartCoroutine(DirectionChangeCooldown());
-                }
+                currentSpeed = 0.0f;
             }
-            else if (currentSpeed > 0)
+
+            speed = currentSpeed;
+            if (trackState == TrackState.InMud)
             {
-                if (Physics2D.OverlapCircle(frontCheck.position, 0.2f, collideWith))
-                {
-                    currentSpeed = -maxVelocity;
-                    StartCoroutine(DirectionChangeCooldown());
-                }
+                speed *= mudSpeedFactor;
             }
-        }
 
-        float speed = currentSpeed;
-        if (trackState == TrackState.InMud)
+            if (trackState == TrackState.InMud)
+            {
+                speed *= mudSpeedFactor;
+            }
+            body.velocity = transform.right * speed;
+
+            moveExecuted = true;
+        }
+        else
         {
-            speed *= mudSpeedFactor;
+            currentSpeed *= 0.9f;
+            body.velocity = transform.right * currentSpeed;
         }
 
-        if (trackState == TrackState.InMud)
-        {
-            speed *= mudSpeedFactor;
-        }
-
-        body.velocity = transform.up * speed;
         body.velocity = new Vector2(Mathf.Min(maxVelocity, body.velocity.x), Mathf.Min(maxVelocity, body.velocity.y));
+    }
+
+    public void Damage(int damageAmount)
+    {
+        health -= damageAmount;
+        healthText.text = gameObject.tag + " : " + health;
     }
 
     IEnumerator DirectionChangeCooldown()
