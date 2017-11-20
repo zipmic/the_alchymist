@@ -24,7 +24,7 @@ public enum ActionType
     Stop
 }
 
-public class GameController : MonoBehaviour
+public class GameManager : MonoBehaviour
 {
     private bool player1Done;
     private bool player2Done;

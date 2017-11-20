@@ -12,7 +12,7 @@ public enum TrackState
 public class PlayerController : MonoBehaviour
 {
     [SerializeField]
-    private GameController gameController;
+    private GameManager gameController;
     [SerializeField]
     private TrackState trackState;
     private bool goingForward;
